@@ -1,21 +1,46 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Readings</title>
+    <title>myReadings</title>
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <style> .glyphicon {cursor: pointer}</style>
   </head>
   <body ng-app='myApp'>
     <div class="container">
-      <div class="col-md-8 col-md-offset-2">
-	<ui-view></ui-view>
+
+      <!-- navigation -->
+      <nav class="navbar navbar-inverse navbar-fixed-top" ng-controller="NavController">
+	<div class="container">
+	  <div class="navbar-header">
+	    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+	      <span class="sr-only">Toggle navigation</span>
+	      <span class="icon-bar"></span>
+	      <span class="icon-bar"></span>
+	      <span class="icon-bar"></span>
+	    </button>
+	    <a class="navbar-brand" href="#">myReadings</a>
+	  </div>
+	  <div id="navbar" class="collapse navbar-collapse">
+	    <ul class="nav navbar-nav">
+	      <li class="active"><a href="/#/home">Home</a></li>
+	      <li ng-show="isLoggedIn()"><a>{{ currentUser() }}</a></li>
+	      <li ng-show="isLoggedIn()"><a href="" ng-click="logout()">Log Out</a></li>
+	      <li ng-hide="isLoggedIn()"><a href="/#/login">Log In</a></li>
+	      <li ng-hide="isLoggedIn()"><a href="/#/register">Register</a></li>
+	    </ul>
+	  </div><!--/.nav-collapse -->
+	</div>
+      </nav>
+
+      <div class="container" style="margin-top:50px;"><h3>Readings List</h3>
+	<div class="row"><ui-view></ui-view></div>
       </div>
     </div>
 
     <script type="text/ng-template" id="/home.html">
       <div class="row">
 
-	<div class="page-header"><h1>my Readings List</h1></div>
+<!--	<div class="page-header"><h3>my Readings List</h3></div> -->
 
         <div class="table-responsive">
 	  <table class="table table-striped">
@@ -37,26 +62,40 @@
 	
 	<form class="form-horizontal" ng-submit="addReading()" style="margin-top:30px;">
 	  <div class="form-group">
-	    <label class="control-label" for="titleInput">Title</label>
-	    <input class="form-control" id="titleInput" type="text" ng-model="title" placeholder="Enter Link Title">
+	    <label class="control-label col-md-3" for="titleInput">Title</label>
+	    <div class="col-md-9">
+	      <input class="form-control" id="titleInput" type="text" ng-model="title" placeholder="Title">
+	    </div>
 	  </div> 
 	  <div class="form-group">
-	    <label class="control-label" for="linkInput">Link</label>
-	    <input class="form-control" id="linkInput" type="text" ng-model="link" placeholder="Enter link">
+	    <label class="control-label col-md-3" for="linkInput">Link</label>
+	    <div class="col-md-9">
+	      <input class="form-control" id="linkInput" type="text" ng-model="link" placeholder="Link">
+	    </div>
 	  </div>
 	  <div class="form-group">
-	    <label class="control-label" for="descriptionInput">Description</label>
-	    <input class="form-control" id="descriptionInput" type="text" ng-model="description" placeholder="Description">
+	    <label class="control-label col-md-3" for="descriptionInput">Description</label>
+	    <div class="col-md-9">
+	      <input class="form-control" id="descriptionInput" type="text" ng-model="description" placeholder="Description">
+	    </div>
 	  </div>
 	  <div class="form-group">
-	    <label class="control-label" for="notesInput">Notes</label>
-	    <input class="form-control" id="notesInput" type="text" ng-model="notes" placeholder="Notes">
+	    <label class="control-label col-md-3" for="notesInput">Notes</label>
+	    <div class="col-md-9">
+	      <input class="form-control" id="notesInput" type="text" ng-model="notes" placeholder="Notes">
+	    </div>
 	  </div>
 	  <div class="form-group">
-	    <label class="control-label" for="tagsInput">Tags List</label>
-	    <input class="form-control" id="tagsInput" type="text" ng-model="tags" placeholder="Comma separated tag list">
+	    <label class="control-label col-md-3" for="tagsInput">Tags List</label>
+	    <div class="col-md-9">
+	      <input class="form-control" id="tagsInput" type="text" ng-model="tags" placeholder="Tag list">
+	    </div>
 	  </div>
-	  <div class="form-group"><button type="submit" class="btn btn-default">Insert</button></div>
+	  <div class="form-group">
+	    <div class="col-md-6 col-md-offset-3">
+	      <button type="submit" class="btn btn-primary">Insert</button>
+	    </div>
+	  </div>
 	</form>
       </div>
     </script>
@@ -91,12 +130,53 @@
 	  </div>	  
 	  <div class="form-group">
 	    <button type="submit" class="btn btn-default" ng-click="editReading()">Edit</button>
-	    <button type="submit" class="btn btn-default" ng-click="$state.go('home')">Back</button>
+	    <button type="submit" class="btn btn-primary" ng-click="$state.go('home')">Back</button>
 	  </div>
 	</form>
       </div>
     </script>
 
+    <script type="text/ng-template" id="/register.html">
+      <div class="page-header">	<h1>myReadings</h1></div>
+
+      <div ng-show="error" class="alert alert-danger row">
+	<span>{{ error.message }}</span>
+      </div>
+
+      <form ng-submit="register()" style="margin-top:30px;">
+	<h3>Register</h3>
+
+	<div class="form-group">
+	  <input type="text" class="form-control" placeholder="Username" ng-model="user.username"></input>
+	</div>
+	<div class="form-group">
+	  <input type="password" class="form-control" placeholder="Password" ng-model="user.password"></input>
+	</div>
+	<button type="submit" class="btn btn-primary">Register</button>
+      </form>
+    </script>
+
+    <script type="text/ng-template" id="/login.html">
+      <div class="page-header">
+	<h1>Flapper News</h1>
+      </div>
+
+      <div ng-show="error" class="alert alert-danger row">
+	<span>{{ error.message }}</span>
+      </div>
+
+      <form ng-submit="login()" style="margin-top:30px;">
+	<h3>Log In</h3>
+	<div class="form-group">
+	  <input type="text" class="form-control" placeholder="Username" ng-model="user.username"></input>
+	</div>
+	<div class="form-group">
+	  <input type="password" class="form-control" placeholder="Password" ng-model="user.password"></input>
+	</div>
+	<button type="submit" class="btn btn-primary">Log In</button>
+      </form>
+    </script>
+    
     <script src="/javascripts/jquery-1.11.3.js"></script>
     <script src="/javascripts/bootstrap.js"></script>
     <script src="/javascripts/angular.js"></script>

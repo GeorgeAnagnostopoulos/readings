@@ -23,6 +23,24 @@ angular.module('myApp', ['ui.router'])
 			return Readings.getReading($stateParams.id);
 		    }]
 		}
+	    })
+	    .state('login', {
+		url: '/login',
+		templateUrl: '/login.html',
+		controller: 'AuthController',
+		onEnter: ['$state', 'auth', function($state, auth) {
+		    if (auth.isLoggedIn())
+			$state.go('home');
+		}]
+	    })
+	    .state('register', {
+		url: '/register',
+		templateUrl: '/register.html',
+		controller: 'AuthController',
+		onEnter: ['$state', 'auth', function($state, auth) {
+		    if (auth.isLoggedIn())
+			$state.go('home');
+		}]
 	    });
 	$urlRouterProvider.otherwise('home');
     }])
@@ -32,7 +50,64 @@ angular.module('myApp', ['ui.router'])
 	    console.log(event, current, previous, rejection)
 	})
     }])
-    .factory('Readings', ['$http', function($http) {
+    .factory('auth', ['$http', '$window', function($http, $window) {
+
+	var auth = {};
+
+	auth.saveToken = function(token) {
+
+	    $window.localStorage['readings-token']=token;
+	};
+
+	auth.getToken = function() {
+
+	    return $window.localStorage['readings-token'];
+	};
+
+	auth.isLoggedIn = function() {
+
+	    var token = auth.getToken();
+	    if (!token)
+		return false;
+
+	    var payload = JSON.parse($window.atob(token.split('.')[1]));
+	    return payload.exp > Date.now() / 1000;
+	};
+
+	auth.currentUser = function() {
+
+	    if (auth.isLoggedIn()) {
+		
+		var token = auth.getToken();
+		var payload = JSON.parse($window.atob(token.split('.')[1]));
+		return payload.username;
+	    }
+	};
+
+	auth.register = function(user) {
+
+	    return $http.post('/register', user).success(function(data) {
+
+		auth.saveToken(data.token);
+	    });
+	};
+
+	auth.login = function(user) {
+
+	    return $http.post('/login', user).success(function(data) {
+
+		auth.saveToken(data.token);
+	    });
+	};
+
+	auth.logout = function() {
+
+	    $window.localStorage.removeItem('readings-token');
+	};
+	
+	return auth;
+    }])
+    .factory('Readings', ['$http', 'auth', function($http, auth) {
 
 	var o = {
 	    readings:[]
@@ -40,7 +115,9 @@ angular.module('myApp', ['ui.router'])
 
 	o.saveReading = function(reading) {
 
-	    return $http.put('/api/readings/' + reading._id).then(function( res) {
+	    return $http.put('/api/readings/' + reading._id,
+	        {headers:{Authorization: 'Bearer ' + auth.getToken}})
+		.then(function( res) {
 
 		return res.data;
 	    });
@@ -64,7 +141,9 @@ angular.module('myApp', ['ui.router'])
 
 	o.create = function readingCreate(reading) {
 
-	    return $http.post('/api/readings', reading).success(function successCreate(data) {
+	    return $http.post('/api/readings', reading,
+		{headers: {Authorization:'Bearer '+ auth.getToken()}})
+		.success(function successCreate(data) {
 
 		o.readings.push(data);
 	    });
@@ -123,4 +202,31 @@ angular.module('myApp', ['ui.router'])
 	       Readings.saveReading($scope.reading);
 	       $state.go('home');
 	   };
+       }])
+    .controller('AuthController', ['$scope', '$state', 'auth', function($scope, $state, auth){
+
+	$scope.user = {};
+
+	$scope.register = function() {
+
+	    auth.register($scope.user).error(function(error) {
+		$scope.error = error;
+	    }).then(function() {
+		$state.go('home');
+	    });
+	};
+	
+	$scope.login = function() {
+	    auth.login($scope.user).error(function(error) {
+		$scope.error = error;
+	    }).then(function() {
+		$state.go('home');
+	    });
+	};
+    }])
+    .controller('NavController', ['$scope', 'auth', function($scope, auth) {
+
+	$scope.isLoggedIn = auth.isLoggedIn;
+	$scope.currentUser = auth.currentUser;
+	$scope.logout = auth.logout;
     }]);
